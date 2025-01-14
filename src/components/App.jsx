@@ -1,25 +1,53 @@
-import Profile from './profile/Profile';
-import userData from './profile/userData.json';
+import { useState, useEffect } from 'react';
+import ContactForm from './ContactForm/ContactForm';
+import SearchBox from './SearchBox/SearchBox';
+import ContactList from './ContactList/ContactList';
+import Title from './Title/Title';
+import initContacts from '../assets/contactData.json';
+import s from './App.module.css';
 
-import FriendList from './friends/FriendList/friendsList';
-import friends from './friends/friends.json';
+const App = () => {
+  const [contacts, setContacts] = useState(() => {
+    const savedContacts = localStorage.getItem('contacts');
+    return savedContacts ? JSON.parse(savedContacts) : initContacts;
+  });
 
-import TransactionHistory from './transactions/transactionHistory';
-import transactions from './transactions/transactions.json';
+  const [filter, setFilter] = useState('');
 
-function App() {
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const addContact = newContact => {
+    setContacts(prevContacts => {
+      return [newContact, ...prevContacts];
+    });
+  };
+
+  const deleteContact = contactId => {
+    setContacts(prevContacts => {
+      return prevContacts.filter(contact => contact.id !== contactId);
+    });
+  };
+
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
   return (
     <>
-      <Profile
-        username={userData.username}
-        tag={userData.tag}
-        location={userData.location}
-        avatar={userData.avatar}
-        stats={userData.stats}
-      />
-      <FriendList friends={friends} />
-      <TransactionHistory items={transactions} />
+      <Title>Phonebook</Title>
+      <div className={s.container}>
+        <ContactForm contacts={contacts} onAdd={addContact} />
+        <SearchBox value={filter} onSearch={setFilter} />
+      </div>
+      {filteredContacts.length ? (
+        <ContactList contacts={filteredContacts} onDelete={deleteContact} />
+      ) : (
+        <p className={s.noContact}>No contact in your list</p>
+      )}
     </>
   );
-}
+};
+
 export default App;
